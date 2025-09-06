@@ -11,4 +11,4 @@ plugins {
 }
 
 rootProject.name = "Koly"
-include("lib")
+include(":cpp")
