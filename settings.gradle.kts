@@ -11,4 +11,4 @@ plugins {
 }
 
 rootProject.name = "Koly"
-include(":cpp")
+include(":cpp-analyzer")

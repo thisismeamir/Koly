@@ -1,55 +1,40 @@
 # Koly
-Koly is a general package for transpiling code from Kotlin programming language to other programming languages, and vice versa. It is designed to be extensible and modular. It will be used as a backend for Kompute numerical library in Kotlin, allowing to write numerical code in Kotlin and transpile it to other languages like Python, C++, etc. 
 
-It will later on be used to transpile code from other languages to Kotlin, allowing to write code in other languages and transpile it to Kotlin as well.
-It will be used to develop numerical libraries at faster rate for Kotlin, by using already written libraries in C/C++, Fortran and Julia.
+Koly is a transpilation infrastructure that bridges Kotlin and C++ for high-performance computational science. It is not a user-facing tool, but rather the foundational layer that powers ISK Kompute, a scientific computing engine for Kotlin.
 
-## Methodology
-Koly will use a combination of parsing, AST generation, and code generation techniques to achieve its goals. It will leverage existing libraries and tools for parsing Kotlin code and generating ASTs. The code generation will be done using template-based approaches, allowing for easy customization and extension to support new target languages. It will go recursively through the code base and the libraries until it finds the root implementations, which are available in the target language.
+## Vision
 
-For example, suppose a Kotlin code as below:
+Koly aims to make Kotlin and C++ feel like two representations of the same computational space. Instead of slow FFI/JNI bindings that call across language boundaries repeatedly, Koly enables:
+
+- Type-safe Kotlin APIs backed by C++ performance
+- Seamless transpilation from Kotlin to C++ for compute-intensive sections
+- Zero-Overhead Interop by eliminiating repeated binding calls.
+
+## Justification
+
+### Traditional Approaches
+
+In traditional approaches for JVM software we would've used Java Native Access and Java Native Interface projects to make binding calls to C++ projects. For example:
 
 ```kotlin
-fun main() {
-    val x = 10
-    val y = 20
-    val z = x + y
-    println("The sum of $x and $y is $z")
-}
-```
-Koly will parse this code, generate an AST representation of the code, and then use templates to generate equivalent code in the target language, such as Python:
-
-```python
-def main():
-    x = 10
-    y = 20
-    z = x + y
-    print(f"The sum of {x} and {y} is {z}")
-```
-or in cpp:
-
-```cpp
-#include <iostream>
-int main() {
-    int x = 10;
-    int y = 20;
-    int z = x + y;
-    std::cout << "The sum of " << x << " and " << y << " is " << z << std::endl;
-    return 0;
+for (i in 0 until 1_000_000) {
+    result[i] = NativeLib.sin(data[i])
 }
 ```
 
-Koly understands the dependencies in Cpp is different than Python, and it will add the necessary includes and headers for the target language. In future goals Koly would have optimization methods included to optimize the generated code for performance and readability.
+This would inherently mean calling JNI 1 million times. Each call crosses the language boundary, marshals data, and returns. For computational loops, this overhead dominates. Koly, transpiles entire functions to C++, and the data goes there at once, processed natively and returned.
 
-## Current Status
-Currently, Koly is in its early stages of development. It can parse Kotlin code and generate an Abstract Syntax Tree (AST) representation of the code. 
+```kotlin
+@Native
+fun heavyComputation(data: DoubleArray) : DoubleArray {
+    return data.map {
+        Sin(it)
+    }
+}
+```
+In general Koly provides:
 
-## Usage in Kompute
-Kompute will use Koly as a part of the backend for producing native cpp code from Kotlin. This would be achieved by annotating the functions in Kotlin with a special annotation and using Kompute gradle plugin to trigger the transpilation process.
+1. Existing C++ ecosystem access: Leverage decades of optimized scientific libraries (GSL, Armadillo, Eigen).
+2. Selective Performance: Not all code needs C++ speed; transpile only what matters.
+3. Cross-platform: Works with Kotlin/JVM, Kotlin/Native, Kotlin WASM, Multiplatform
 
-## Future Goals
-- Support for more target languages like JavaScript, Rust, etc.
-- Optimization techniques for generated code.
-- Integration with build systems like Gradle and Maven for seamless transpilation during the build process.
-- Development of a user-friendly CLI tool for Koly.
-- Comprehensive testing and validation of generated code to ensure correctness and performance.
